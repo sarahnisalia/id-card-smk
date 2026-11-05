@@ -129,14 +129,16 @@
             display: grid;
             grid-template-columns: repeat(2, var(--card-w));
             grid-template-rows: repeat(5, var(--card-h));
-            gap: 5mm; /* Jarak antar kartu */
+            gap: 4mm; /* Jarak antar kartu disesuaikan agar tidak over-height */
             justify-content: center;
-            align-content: start;
-            padding-top: 10mm; /* Margin atas untuk ruang print */
+            align-content: center; /* Memposisikan seluruh grid tepat di tengah vertikal kertas */
+            padding: 0; /* Menghilangkan padding yang menyebabkan kertas meluap */
             margin: 0 auto 20px auto;
             background-color: white;
             box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1);
             box-sizing: border-box;
+            overflow: hidden; /* Mencegah elemen bocor secara visual */
+            page-break-after: always;
         }
 
         /* --- BULLETPROOF PRINT CSS --- */
