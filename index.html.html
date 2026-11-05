@@ -31,7 +31,9 @@
             --nama-w: 50mm;
             --nama-size: 12pt;
             --nama-rot: 0deg;
-            --nama-color: #000000;
+            --nama-color1: #000000;
+            --nama-color2: #000000;
+            --nama-grad-angle: 90deg;
 
             /* Kalibrasi Jurusan */
             --jur-x: 30mm;
@@ -39,7 +41,9 @@
             --jur-w: 50mm;
             --jur-size: 8pt;
             --jur-rot: 0deg;
-            --jur-color: #1e3a8a;
+            --jur-color1: #1e3a8a;
+            --jur-color2: #3b82f6;
+            --jur-grad-angle: 90deg;
         }
 
         body { 
@@ -94,7 +98,10 @@
             text-align: center;
             z-index: 20;
             line-height: 1.1;
-            color: var(--nama-color);
+            background: linear-gradient(var(--nama-grad-angle), var(--nama-color1), var(--nama-color2));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            color: transparent;
         }
 
         .card-jurusan {
@@ -109,7 +116,10 @@
             text-align: center;
             z-index: 20;
             line-height: 1.1;
-            color: var(--jur-color);
+            background: linear-gradient(var(--jur-grad-angle), var(--jur-color1), var(--jur-color2));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            color: transparent;
         }
 
         /* --- STYLING HALAMAN A4 (PREVIEW & PRINT) --- */
@@ -176,6 +186,11 @@
             * {
                 -webkit-print-color-adjust: exact !important;
                 print-color-adjust: exact !important;
+            }
+            
+            /* Paksa efek gradasi teks tetap berjalan di mode cetak */
+            .card-nama, .card-jurusan {
+                -webkit-text-fill-color: transparent !important;
             }
         }
     </style>
@@ -253,8 +268,12 @@
                         <input type="range" min="6" max="24" value="12" step="0.5" oninput="updateVar('--nama-size', this.value+'pt', 'v-nama-size')" class="w-full"></label>
                     <label class="col-span-2 text-emerald-600 font-bold">Rotasi: <span id="v-nama-rot">0</span>°
                         <input type="range" min="0" max="360" value="0" step="1" oninput="updateVar('--nama-rot', this.value+'deg', 'v-nama-rot')" class="w-full"></label>
-                    <label class="col-span-2 flex items-center gap-2">Warna:
-                        <input type="color" value="#000000" oninput="updateVar('--nama-color', this.value)" class="w-8 h-8 p-0 border-0"></label>
+                    <label class="flex items-center gap-2">Warna 1:
+                        <input type="color" value="#000000" oninput="updateVar('--nama-color1', this.value)" class="w-8 h-8 p-0 border-0"></label>
+                    <label class="flex items-center gap-2">Warna 2:
+                        <input type="color" value="#000000" oninput="updateVar('--nama-color2', this.value)" class="w-8 h-8 p-0 border-0"></label>
+                    <label class="col-span-2 text-purple-600 font-bold">Arah Gradasi: <span id="v-nama-grad-angle">90</span>°
+                        <input type="range" min="0" max="360" value="90" step="1" oninput="updateVar('--nama-grad-angle', this.value+'deg', 'v-nama-grad-angle')" class="w-full"></label>
                 </div>
             </div>
 
@@ -272,8 +291,12 @@
                         <input type="range" min="5" max="20" value="8" step="0.5" oninput="updateVar('--jur-size', this.value+'pt', 'v-jur-size')" class="w-full"></label>
                     <label class="col-span-2 text-emerald-600 font-bold">Rotasi: <span id="v-jur-rot">0</span>°
                         <input type="range" min="0" max="360" value="0" step="1" oninput="updateVar('--jur-rot', this.value+'deg', 'v-jur-rot')" class="w-full"></label>
-                    <label class="col-span-2 flex items-center gap-2">Warna:
-                        <input type="color" value="#1e3a8a" oninput="updateVar('--jur-color', this.value)" class="w-8 h-8 p-0 border-0"></label>
+                    <label class="flex items-center gap-2">Warna 1:
+                        <input type="color" value="#1e3a8a" oninput="updateVar('--jur-color1', this.value)" class="w-8 h-8 p-0 border-0"></label>
+                    <label class="flex items-center gap-2">Warna 2:
+                        <input type="color" value="#3b82f6" oninput="updateVar('--jur-color2', this.value)" class="w-8 h-8 p-0 border-0"></label>
+                    <label class="col-span-2 text-purple-600 font-bold">Arah Gradasi: <span id="v-jur-grad-angle">90</span>°
+                        <input type="range" min="0" max="360" value="90" step="1" oninput="updateVar('--jur-grad-angle', this.value+'deg', 'v-jur-grad-angle')" class="w-full"></label>
                 </div>
             </div>
 
