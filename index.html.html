@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistem Cetak ID Card SMK Muhammadiyah 2 Muntilan</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { background: #f0f2f5; color: #333; padding: 20px; }
+        .container { max-width: 1200px; margin: 0 auto; }
+        header { background: #ffffff; padding: 20px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); margin-bottom: 20px; text-align: center; }
+        h1 { font-size: 24px; color: #0f172a; margin-bottom: 5px; }
+        p.sub { color: #64748b; font-size: 14px; }
+        
+        .panel { background: #ffffff; padding: 20px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); margin-bottom: 20px; display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; }
+        .control-group { display: flex; flex-direction: column; gap: 8px; }
+        .control-group label { font-size: 13px; font-weight: 600; color: #475569; }
+        input[type="file"], input[type="text"], input[type="number"], select { padding: 10px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px; }
+        
+        .btn { background: #2563eb; color: #fff; border: none; padding: 12px 20px; border-radius: 8px; font-weight: 600; cursor: pointer; transition: background 0.2s; display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
+        .btn:hover { background: #1d4ed8; }
+        .btn-success { background: #16a34a; }
+        .btn-success:hover { background: #15803d; }
+
+        .preview-section { background: #ffffff; padding: 20px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+        .preview-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px solid #e2e8f0; padding-bottom: 10px; flex-wrap: wrap; gap: 10px; }
+        
+        /* A4 Landscape Page Container (297mm x 210mm) */
+        .a4-page {
+            width: 297mm;
+            height: 210mm;
+            background: white;
+            margin: 0 auto 20px auto;
+            padding: 10mm 10mm;
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            grid-template-rows: repeat(2, 1fr);
+            gap: 5mm;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            position: relative;
+            page-break-after: always;
+            break-after: page;
+        }
+
+        /* ID Card Box (8.5 x 5.5 cm Landscape) */
+        .id-card {
+            width: 8.5cm;
+            height: 5.5cm;
+            position: relative;
+            background: #fff;
+            border-radius: 6px;
+            overflow: hidden;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+            border: 1px solid #e2e8f0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .id-card img.bg-template {
+            width: 100%;
+            height: 100%;
+            object-fit: fill;
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 1;
+        }
+
+        /* Dynamic Elements */
+        .dynamic-photo {
+            position: absolute;
+            z-index: 2;
+            object-fit: cover;
+            border: 1px solid #1e293b;
+            background: #e2e8f0;
+            transform-origin: center center;
+        }
+
+        .dynamic-text {
+            position: absolute;
+            z-index: 2;
+            white-space: nowrap;
+            font-weight: bold;
+            line-height: 1.1;
+            transform-origin: left center;
+        }
+
+        /* Print Settings */
+        @media print {
+            body { background: none; padding: 0; }
+            header, .panel, .preview-header, button { display: none !important; }
+            .preview-section { box-shadow: none; padding: 0; background: none; }
+            .a4-page {
+                margin: 0;
+                box-shadow: none;
+                page-break-after: always;
+                break-after: page;
+                width: 297mm;
+                height: 210mm;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>Sistem Cetak ID Card PKL Siswa</h1>
+        <p class="sub">SMK Muhammadiyah 2 Muntilan - Format A4 Landscape (10 Kartu per Halaman)</p>
+    </header>
+
+    <div class="panel">
+        <div class="control-group">
+            <label>1. Upload Template ID Card (JPG/PNG)</label>
+            <input type="file" id="templateInput" accept="image/*">
+        </div>
+        <div class="control-group">
+            <label>2. Upload File Excel Data Siswa (.xlsx / .csv)</label>
+            <input type="file" id="excelInput" accept=".xlsx, .xls, .csv">
+        </div>
+        <div class="control-group">
+            <label>3. Pilih Folder Foto Siswa (Multi Select)</label>
+            <input type="file" id="photoInput" accept="image/*" multiple>
+        </div>
+        <div class="control-group" style="justify-content: flex-end;">
+            <button class="btn btn-success" onclick="generateCards()">Proses & Tampilkan Kartu</button>
+        </div>
+    </div>
+
+    <!-- Panel Pengaturan Posisi, Rotasi & Gaya Teks -->
+    <div class="panel" style="grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));">
+        <div class="control-group">
+            <label>Rotasi Foto (°)</label>
+            <input type="number" id="rotFoto" value="0" oninput="generateCards()">
+        </div>
+        <div class="control-group">
+            <label>Rotasi Nama (°)</label>
+            <input type="number" id="rotNama" value="0" oninput="generateCards()">
+        </div>
+        <div class="control-group">
+            <label>Rotasi Jurusan (°)</label>
+            <input type="number" id="rotJur" value="0" oninput="generateCards()">
+        </div>
+        <div class="control-group">
+            <label>Warna Teks Nama</label>
+            <input type="text" id="colorNama" value="#000000" oninput="generateCards()">
+        </div>
+        <div class="control-group">
+            <label>Warna Teks Jurusan</label>
+            <input type="text" id="colorJur" value="#1e3a8a" oninput="generateCards()">
+        </div>
+    </div>
+
+    <div class="preview-section">
+        <div class="preview-header">
+            <h3>Pratinjau Hasil Kartu (Total: <span id="totalSiswa">0</span> Siswa)</h3>
+            <button class="btn" onclick="window.print()">Cetak / Print ke PDF (A4 Landscape)</button>
+        </div>
+        <div id="printArea">
+            <p style="text-align: center; color: #94a3b8; padding: 40px;">Belum ada data yang dimuat. Silakan unggah template, excel, dan foto.</p>
+        </div>
+    </div>
+</div>
+
+<script>
+    let studentData = [];
+    let photoMap = {};
+    let templateDataUrl = "";
+
+    document.getElementById('templateInput').addEventListener('change', function(e) {
+        let file = e.target.files[0];
+        if (file) {
+            let reader = new FileReader();
+            reader.onload = function(evt) { 
+                templateDataUrl = evt.target.result; 
+                generateCards();
+            };
+            reader.readAsDataURL(file);
+        }
+    });
+
+    document.getElementById('photoInput').addEventListener('change', function(e) {
+        photoMap = {};
+        for (let file of e.target.files) {
+            photoMap[file.name.toLowerCase().trim()] = file;
+        }
+        alert("Berhasil memuat " + e.target.files.length + " foto!");
+        generateCards();
+    });
+
+    document.getElementById('excelInput').addEventListener('change', function(e) {
+        let file = e.target.files[0];
+        let reader = new FileReader();
+        reader.onload = function(e) {
+            let data = new Uint8Array(e.target.result);
+            let workbook = XLSX.read(data, {type: 'array'});
+            let firstSheet = workbook.SheetNames[0];
+            let rows = XLSX.utils.sheet_to_json(workbook.Sheets[firstSheet]);
+            
+            studentData = rows.map(r => {
+                let jurusanRaw = String(r['Kelas'] || r['kelas'] || r['JURUSAN'] || r['jurusan'] || '').toUpperCase().trim();
+                let jurusanFull = jurusanRaw;
+                if (jurusanRaw === 'TJKT') jurusanFull = 'TEKNIK JARINGAN KOMPUTER DAN TELEKOMUNIKASI';
+                else if (jurusanRaw === 'MPLB') jurusanFull = 'MANAJEMEN PERKANTORAN DAN LAYANAN BISNIS';
+                else if (jurusanRaw === 'AKL') jurusanFull = 'AKUNTANSI DAN KEUANGAN LEMBAGA';
+
+                return {
+                    nama: String(r['Nama'] || r['nama'] || r['NAMA'] || ''),
+                    jurusan: jurusanFull,
+                    foto: String(r['Foto'] || r['foto'] || r['FOTO'] || '').trim()
+                };
+            });
+            document.getElementById('totalSiswa').innerText = studentData.length;
+            alert("Data Excel berhasil dimuat: " + studentData.length + " siswa.");
+            generateCards();
+        };
+        reader.readAsArrayBuffer(file);
+    });
+
+    function generateCards() {
+        let printArea = document.getElementById('printArea');
+        if (studentData.length === 0) {
+            printArea.innerHTML = '<p style="text-align: center; color: #64748b; padding: 40px;">Sila muat naik fail Excel dan gambar terlebih dahulu.</p>';
+            return;
+        }
+
+        let rotF = document.getElementById('rotFoto').value || 0;
+        let rotN = document.getElementById('rotNama').value || 0;
+        let rotJ = document.getElementById('rotJur').value || 0;
+        let cNama = document.getElementById('colorNama').value || '#000000';
+        let cJur = document.getElementById('colorJur').value || '#1e3a8a';
+
+        printArea.innerHTML = '';
+        
+        let cardsPerPage = 10;
+        let totalPages = Math.ceil(studentData.length / cardsPerPage);
+
+        for (let p = 0; p < totalPages; p++) {
+            let pageDiv = document.createElement('div');
+            pageDiv.className = 'a4-page';
+
+            let startIdx = p * cardsPerPage;
+            let endIdx = Math.min(startIdx + cardsPerPage, studentData.length);
+
+            for (let i = startIdx; i < endIdx; i++) {
+                let s = studentData[i];
+                let cardDiv = document.createElement('div');
+                cardDiv.className = 'id-card';
+
+                if (templateDataUrl) {
+                    let imgBg = document.createElement('img');
+                    imgBg.src = templateDataUrl;
+                    imgBg.className = 'bg-template';
+                    cardDiv.appendChild(imgBg);
+                }
+
+                // Foto Siswa
+                let photoEl = document.createElement('img');
+                photoEl.className = 'dynamic-photo';
+                photoEl.style.left = '1.2cm';
+                photoEl.style.top = '1.3cm';
+                photoEl.style.width = '2.2cm';
+                photoEl.style.height = '3.0cm';
+                photoEl.style.transform = `rotate(${rotF}deg)`;
+
+                let photoKey = s.foto.toLowerCase();
+                if (photoMap[photoKey]) {
+                    photoEl.src = URL.createObjectURL(photoMap[photoKey]);
+                } else {
+                    photoEl.src = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100"><rect width="100%" height="100%" fill="%23cbd5e1"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-size="10" fill="%23475569">Foto</text></svg>';
+                }
+                cardDiv.appendChild(photoEl);
+
+                // Teks Nama Siswa
+                let nameEl = document.createElement('div');
+                nameEl.className = 'dynamic-text';
+                nameEl.style.left = '3.8cm';
+                nameEl.style.top = '1.8cm';
+                nameEl.style.fontSize = '10pt';
+                nameEl.style.color = cNama;
+                nameEl.style.transform = `rotate(${rotN}deg)`;
+                nameEl.innerText = s.nama;
+                cardDiv.appendChild(nameEl);
+
+                // Teks Jurusan
+                let jurEl = document.createElement('div');
+                jurEl.className = 'dynamic-text';
+                jurEl.style.left = '3.8cm';
+                jurEl.style.top = '2.4cm';
+                jurEl.style.fontSize = '7.5pt';
+                jurEl.style.color = cJur;
+                jurEl.style.transform = `rotate(${rotJ}deg)`;
+                jurEl.innerText = s.jurusan;
+                cardDiv.appendChild(jurEl);
+
+                pageDiv.appendChild(cardDiv);
+            }
+            printArea.appendChild(pageDiv);
+        }
+    }
+</script>
+
+</body>
+</html>
